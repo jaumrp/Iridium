@@ -1,0 +1,15 @@
+[workspace]
+name = "Iridium"
+version = "0.1.0"
+edition = "2024"
+members = [
+    "crates/*",
+    "server"
+]
+
+[workspace.dependencies]
+tokio = { version = "1.49.0", features = ["full"] }
+serde = { version = "1.0.228", features = ["derive"] }
+bytes = "1.0"
+uuid = { version = "1.20.0", features = ["v4", "serde"] }
+log = "0.4.29"
