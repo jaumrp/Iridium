@@ -1,10 +1,16 @@
-[workspace]
-name = "Iridium"
+[package]
+name = "iridium"
 version = "0.1.0"
 edition = "2024"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+
+[workspace]
 members = [
     "crates/*",
-    "server"
+    "test"
 ]
 
 [workspace.dependencies]
@@ -13,3 +19,17 @@ serde = { version = "1.0.228", features = ["derive"] }
 bytes = "1.0"
 uuid = { version = "1.20.0", features = ["v4", "serde"] }
 log = "0.4.29"
+syn = { version = "2.0.114", features = ["full", "extra-traits"] }
+quote = "1.0.44"
+proc-macro2 = "1.0.106"
+dotenvy = "0.15.7"
+simple_logger = "5.1.0"
+time = { version = "0.3.19", features = ["macros"] }
+
+[dependencies]
+server = { path = "crates/server" }
+macros = { path = "crates/macros" }
+nbt = { path = "crates/nbt" }
+entity = { path = "crates/entity" }
+network = { path = "crates/network" }
+protocol = { path = "crates/protocol" }
