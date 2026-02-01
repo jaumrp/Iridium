@@ -2,7 +2,7 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{ItemFn, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, ItemFn, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
@@ -55,4 +55,53 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(out)
+}
+
+#[proc_macro_derive(Packet)]
+pub fn packet_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+
+    let fields = match input.data {
+        Data::Struct(data) => match data.fields {
+            Fields::Named(fields) => fields.named,
+            _ => panic!("packets derive only named fields are supported"),
+        },
+        _ => panic!("packets derive only structs are supported"),
+    };
+
+    let read = fields.iter().map(|field| {
+        let name = &field.ident;
+        let ty = &field.ty;
+        quote! {
+            #name: <#ty as crate::serial::PacketRead>::read(buffer)?,
+        }
+    });
+
+    let write = fields.iter().map(|field| {
+        let name = &field.ident;
+        quote! {
+            crate::serial::PacketWrite::write(&self.#name, buffer)?;
+        }
+    });
+
+    let expanded = quote! {
+        impl crate::serial::PacketRead for #name {
+            fn read<Buffer: bytes::Buf>(buffer: &mut Buffer) -> Result<Self, crate::serial::PacketError> {
+                Ok(Self {
+                    #(#read)*
+                })
+            }
+        }
+
+        impl crate::serial::PacketWrite for #name {
+            fn write<Buffer: bytes::BufMut>(&self, buffer: &mut Buffer) -> Result<(), crate::serial::PacketError> {
+                #(#write)*
+                Ok(())
+            }
+        }
+
+    };
+
+    TokenStream::from(expanded)
 }

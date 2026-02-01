@@ -25,6 +25,13 @@ proc-macro2 = "1.0.106"
 dotenvy = "0.15.7"
 simple_logger = "5.1.0"
 time = { version = "0.3.19", features = ["macros"] }
+thiserror = "1.0"
+server = { path = "crates/server" }
+macros = { path = "crates/macros" }
+nbt = { path = "crates/nbt" }
+entity = { path = "crates/entity" }
+network = { path = "crates/network" }
+protocol = { path = "crates/protocol" }
 
 [dependencies]
 server = { path = "crates/server" }

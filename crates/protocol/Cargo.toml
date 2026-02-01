@@ -4,3 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+bytes.workspace = true
+thiserror.workspace = true
+macros.workspace = true
