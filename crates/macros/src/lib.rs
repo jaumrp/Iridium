@@ -25,13 +25,13 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
         f
     };
 
-    let output_type = &input.sig.output;
+    //let output_type = &input.sig.output;
     let vis = &input.vis;
     let attrs = &input.attrs;
 
     let out = quote! {
         #(#attrs)*
-        #vis fn #original_name() #output_type {
+        #vis fn #original_name() {
 
             iridium::server::init_logging();
 
@@ -46,7 +46,8 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 
             let rt = iridium::server::tokio::runtime::Builder::new_multi_thread().enable_all().build().expect("failed to create runtime");
             rt.block_on(async {
-                #inner_name().await
+                let server_instance = #inner_name().await;
+                iridium::server::iridium_server::bootstrap(server_instance, config).await;
             })
         }
         #[allow(non_snake_case)]

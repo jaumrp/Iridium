@@ -4,3 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+tokio.workspace = true
+protocol.workspace = true
+bytes.workspace = true
+log.workspace = true

@@ -1,5 +1,6 @@
 use std::env;
 
+pub mod iridium_server;
 pub use log;
 pub use tokio;
 
@@ -22,7 +23,7 @@ impl Config {
                 .unwrap_or_else(|_| "25565".to_string())
                 .parse()
                 .unwrap_or(25565),
-            id: env::var("SERVER_ID").unwrap_or_else(|_| "iridium".to_string()),
+            id: env::var("IRIDIUM_SERVER_ID").unwrap_or_else(|_| "iridium".to_string()),
         }
     }
 }

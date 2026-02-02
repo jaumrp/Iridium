@@ -9,3 +9,5 @@ simple_logger.workspace = true
 log.workspace = true
 time.workspace = true
 tokio.workspace = true
+async-trait.workspace = true
+network.workspace = true

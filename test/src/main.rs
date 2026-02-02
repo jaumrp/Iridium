@@ -1,10 +1,33 @@
-use std::io::Error;
+use iridium::{
+    protocol,
+    server::{
+        iridium_server::{IridiumServer, async_trait},
+        log::warn,
+    },
+};
 
-use iridium::protocol;
+pub struct TestServer {
+    // Add fields here
+    _max_connections: usize,
+}
+
+impl TestServer {
+    pub fn new() -> Self {
+        TestServer {
+            _max_connections: 26,
+        }
+    }
+}
+
+#[async_trait]
+impl IridiumServer for TestServer {
+    async fn on_enable(&mut self) {
+        warn!("test");
+    }
+}
 
 #[iridium::main]
-async fn main() -> Result<(), Error> {
-    protocol::test();
-
-    Ok(())
+async fn main() -> TestServer {
+    let my_server = TestServer::new();
+    my_server
 }

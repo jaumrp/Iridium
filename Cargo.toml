@@ -32,6 +32,7 @@ nbt = { path = "crates/nbt" }
 entity = { path = "crates/entity" }
 network = { path = "crates/network" }
 protocol = { path = "crates/protocol" }
+async-trait = "0.1.89"
 
 [dependencies]
 server = { path = "crates/server" }

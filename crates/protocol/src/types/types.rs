@@ -8,7 +8,7 @@ impl PacketRead for u16 {
         if buffer.remaining() < 2 {
             return Err(crate::serial::PacketError::Incomplete);
         }
-        Ok(buffer.get_u16_le())
+        Ok(buffer.get_u16())
     }
 }
 
@@ -17,7 +17,7 @@ impl PacketWrite for u16 {
         &self,
         buffer: &mut Buffer,
     ) -> Result<(), crate::serial::PacketError> {
-        buffer.put_u16_le(*self);
+        buffer.put_u16(*self);
         Ok(())
     }
 }
