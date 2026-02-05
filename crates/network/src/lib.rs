@@ -9,12 +9,13 @@ use protocol::{
 };
 use tokio::{io::AsyncReadExt, net::TcpStream, sync::broadcast};
 
+pub mod states;
+
 pub enum ConnectionState {
     Handshaking,
     Login,
     Status,
     Play,
-    Configuration,
 }
 
 pub struct PlayerConnection {
@@ -31,16 +32,6 @@ impl PlayerConnection {
             buffer: BytesMut::with_capacity(4096),
             state: ConnectionState::Handshaking,
             shutdown_tx,
-        }
-    }
-
-    async fn read_socket(&mut self) -> usize {
-        match self.socket.read_buf(&mut self.buffer).await {
-            Ok(n) => n,
-            Err(e) => {
-                error!("Error reading from socket: {}", e);
-                0
-            }
         }
     }
 
@@ -80,13 +71,11 @@ impl PlayerConnection {
                                     let mut packet_data = self.buffer.split_to(packet_len);
 
                                     if let Err(e) = self.handle_packet(&mut packet_data).await {
-                                        error!("Error handling packet: {}", e);
-                                        return;
-                                    }
-                                    if self.buffer.is_empty() {
-                                        if 0 == self.read_socket().await {
-                                            return;
+                                        match e {
+                                            PacketError::Incomplete => {}
+                                            _ => error!("Error handling packet: {}", e),
                                         }
+                                        return;
                                     }
                                 }
                             }

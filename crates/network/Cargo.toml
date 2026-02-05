@@ -8,3 +8,4 @@ tokio.workspace = true
 protocol.workspace = true
 bytes.workspace = true
 log.workspace = true
+async-trait.workspace = true
