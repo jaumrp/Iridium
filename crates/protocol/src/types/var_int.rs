@@ -1,3 +1,5 @@
+use bytes::{BufMut, BytesMut};
+
 use crate::serial::{PacketError, PacketRead, PacketWrite};
 
 pub type VarIntType = i32;
@@ -6,10 +8,7 @@ pub type VarIntType = i32;
 pub struct VarInt(pub VarIntType);
 
 impl PacketWrite for VarInt {
-    fn write<Buffer: bytes::BufMut>(
-        &self,
-        buffer: &mut Buffer,
-    ) -> Result<(), crate::serial::PacketError> {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), crate::serial::PacketError> {
         let mut x = self.0 as u32;
 
         loop {

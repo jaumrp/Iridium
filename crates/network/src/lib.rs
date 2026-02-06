@@ -1,22 +1,24 @@
 use std::io::Cursor;
 
+use async_trait::async_trait;
 use bytes::{Buf, BytesMut};
-use log::{error, info, warn};
+use log::{debug, error, warn};
 use protocol::{
-    packets::server::configuration::handshake::HandshakePacket,
-    serial::{PacketError, PacketRead},
+    packets::{ConnectionState, PlayerContext},
+    serial::{PacketError, PacketRead, PacketWrite},
     types::var_int::VarInt,
 };
-use tokio::{io::AsyncReadExt, net::TcpStream, sync::broadcast};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpStream,
+    sync::broadcast,
+};
+
+use crate::states::{
+    PacketDispatcher, handshaking::HandshakePacketHandler, status::StatusPacketHandler,
+};
 
 pub mod states;
-
-pub enum ConnectionState {
-    Handshaking,
-    Login,
-    Status,
-    Play,
-}
 
 pub struct PlayerConnection {
     socket: TcpStream,
@@ -84,30 +86,65 @@ impl PlayerConnection {
             }
         }
     }
+
     async fn handle_packet(&mut self, packet_data: &mut BytesMut) -> Result<(), PacketError> {
         let mut cursor = Cursor::new(&packet_data[..]);
-        let _packet_id = VarInt::read(&mut cursor)?.0;
+        let packet_id = VarInt::read(&mut cursor)?.0;
 
         //info!("received packet with id {}", packet_id);
 
         match self.state {
             ConnectionState::Handshaking => {
-                let packet = HandshakePacket::read(&mut cursor)?;
-                info!("{:?}", packet);
+                let mut handler = HandshakePacketHandler::from_id(packet_id, &mut cursor)?;
+                handler.dispatch_packet(self).await?;
             }
             ConnectionState::Status => {
-                warn!("state is not implemented");
+                let mut handler = StatusPacketHandler::from_id(packet_id, &mut cursor)?;
+                handler.dispatch_packet(self).await?;
             }
             ConnectionState::Login => {
-                warn!("state is not implemented");
+                warn!("login state is not implemented");
             }
             ConnectionState::Play => {
-                warn!("state is not implemented");
-            }
-            _ => {
-                warn!("state is not implemented");
+                warn!("play state is not implemented");
             }
         }
+
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl PlayerContext for PlayerConnection {
+    fn get_state(&self) -> &ConnectionState {
+        return &self.state;
+    }
+
+    fn set_state(&mut self, state: ConnectionState) {
+        self.state = state;
+    }
+
+    async fn send_packet(
+        &mut self,
+        packet: &dyn protocol::serial::PacketWrite,
+    ) -> Result<(), PacketError> {
+        let mut body = BytesMut::new();
+
+        packet.write(&mut body)?;
+
+        let len = body.len();
+        let len = VarInt(len as i32);
+
+        let mut buffer = BytesMut::new();
+        len.write(&mut buffer)?;
+        buffer.extend_from_slice(&body);
+
+        warn!("{:?}", buffer);
+
+        self.socket.write_all(&buffer).await?;
+        self.socket.flush().await?;
+
+        debug!("packet sent");
 
         Ok(())
     }

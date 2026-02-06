@@ -79,7 +79,9 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(
         }
     }
 
-    let _ = shutdown_tex.send(());
+    if !shutdown_tex.is_empty() {
+        let _ = shutdown_tex.send(());
+    }
 
     warn!("Shutting down Iridium Server...");
     server.on_disable().await;

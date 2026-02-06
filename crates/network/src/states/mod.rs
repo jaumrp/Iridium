@@ -1,5 +1,3 @@
-use std::io::Cursor;
-
 use async_trait::async_trait;
 use protocol::serial::PacketError;
 
@@ -11,11 +9,9 @@ pub mod play;
 pub mod status;
 
 #[async_trait]
-pub trait ProtocolState {
-    async fn handle_packet(
+pub trait PacketDispatcher {
+    async fn dispatch_packet(
         &mut self,
         player_connection: &mut PlayerConnection,
-        packet_id: i32,
-        data: Cursor<&[u8]>,
     ) -> Result<(), PacketError>;
 }

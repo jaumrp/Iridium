@@ -2,7 +2,7 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, ItemFn, parse_macro_input};
+use syn::{Data, DeriveInput, Fields, ItemFn, LitInt, parse_macro_input};
 
 #[proc_macro_attribute]
 pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
@@ -58,10 +58,26 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(out)
 }
 
-#[proc_macro_derive(Packet)]
+#[proc_macro_derive(Packet, attributes(packet))]
 pub fn packet_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
+
+    let mut id: Option<LitInt> = None;
+
+    for attr in &input.attrs {
+        if attr.path().is_ident("packet") {
+            let _ = attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("id") {
+                    let value: LitInt = meta.value()?.parse()?;
+                    id = Some(value);
+                    Ok(())
+                } else {
+                    Err(meta.error("expected `id` attribute"))
+                }
+            });
+        }
+    }
 
     let fields = match input.data {
         Data::Struct(data) => match data.fields {
@@ -86,6 +102,16 @@ pub fn packet_derive(input: TokenStream) -> TokenStream {
         }
     });
 
+    let write_id = if let Some(id) = id {
+        quote! {
+            crate::serial::PacketWrite::write(&crate::types::var_int::VarInt(#id), buffer)?;
+        }
+    } else {
+        quote! {
+            crate::serial::PacketWrite::write(&crate::types::var_int::VarInt(0x00), buffer)?;
+        }
+    };
+
     let expanded = quote! {
         impl crate::serial::PacketRead for #name {
             fn read<Buffer: bytes::Buf>(buffer: &mut Buffer) -> Result<Self, crate::serial::PacketError> {
@@ -96,7 +122,8 @@ pub fn packet_derive(input: TokenStream) -> TokenStream {
         }
 
         impl crate::serial::PacketWrite for #name {
-            fn write<Buffer: bytes::BufMut>(&self, buffer: &mut Buffer) -> Result<(), crate::serial::PacketError> {
+            fn write(&self, buffer: &mut bytes::BytesMut) -> Result<(), crate::serial::PacketError> {
+                #write_id
                 #(#write)*
                 Ok(())
             }

@@ -1,3 +1,5 @@
+use bytes::{BufMut, BytesMut};
+
 use crate::{
     serial::{PacketError, PacketRead, PacketWrite},
     types::var_int::VarInt,
@@ -13,11 +15,24 @@ impl PacketRead for u16 {
 }
 
 impl PacketWrite for u16 {
-    fn write<Buffer: bytes::BufMut>(
-        &self,
-        buffer: &mut Buffer,
-    ) -> Result<(), crate::serial::PacketError> {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), crate::serial::PacketError> {
         buffer.put_u16(*self);
+        Ok(())
+    }
+}
+
+impl PacketRead for i64 {
+    fn read<Buffer: bytes::Buf>(buffer: &mut Buffer) -> Result<Self, crate::serial::PacketError> {
+        if buffer.remaining() < 2 {
+            return Err(crate::serial::PacketError::Incomplete);
+        }
+        Ok(buffer.get_i64())
+    }
+}
+
+impl PacketWrite for i64 {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), crate::serial::PacketError> {
+        buffer.put_i64(*self);
         Ok(())
     }
 }
@@ -44,7 +59,7 @@ impl PacketRead for String {
 }
 
 impl PacketWrite for String {
-    fn write<Buffer: bytes::BufMut>(&self, buffer: &mut Buffer) -> Result<(), PacketError> {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), PacketError> {
         VarInt(self.len() as i32).write(buffer)?;
         buffer.put_slice(self.as_bytes());
         Ok(())

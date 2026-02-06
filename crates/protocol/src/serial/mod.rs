@@ -1,4 +1,7 @@
-use bytes::{Buf, BufMut};
+use async_trait::async_trait;
+use bytes::{Buf, BytesMut};
+
+use crate::packets::PlayerContext;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PacketError {
@@ -14,16 +17,27 @@ pub enum PacketError {
     #[error("UTF-8 error: {0}")]
     Utf8(#[from] std::string::FromUtf8Error),
 
+    #[error("Unknown packet")]
+    UnknownPacket,
+
     #[error("Invalid data")]
     InvalidData,
 }
 
-pub trait PacketWrite {
-    fn write<Buffer: BufMut>(&self, buffer: &mut Buffer) -> Result<(), PacketError>;
+pub trait PacketWrite: Send + Sync {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), PacketError>;
 }
 
 pub trait PacketRead {
     fn read<Buffer: Buf>(buffer: &mut Buffer) -> Result<Self, PacketError>
     where
         Self: Sized;
+}
+
+#[async_trait]
+pub trait PacketHandler {
+    async fn handle<Context: PlayerContext>(
+        &mut self,
+        ctx: &mut Context,
+    ) -> Result<(), PacketError>;
 }

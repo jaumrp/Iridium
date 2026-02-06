@@ -7,3 +7,5 @@ edition.workspace = true
 bytes.workspace = true
 thiserror.workspace = true
 macros.workspace = true
+async-trait.workspace = true
+log.workspace = true

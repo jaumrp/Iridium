@@ -1,9 +1,6 @@
-use iridium::{
-    protocol,
-    server::{
-        iridium_server::{IridiumServer, async_trait},
-        log::warn,
-    },
+use iridium::server::{
+    iridium_server::{IridiumServer, async_trait},
+    log::warn,
 };
 
 pub struct TestServer {

@@ -1,3 +1,5 @@
+use bytes::BytesMut;
+
 use crate::{
     serial::{PacketRead, PacketWrite},
     types::var_int::VarInt,
@@ -16,10 +18,7 @@ impl<T: PacketRead> PacketRead for Vec<T> {
 }
 
 impl<T: PacketWrite> PacketWrite for Vec<T> {
-    fn write<Buffer: bytes::BufMut>(
-        &self,
-        buffer: &mut Buffer,
-    ) -> Result<(), crate::serial::PacketError> {
+    fn write(&self, buffer: &mut BytesMut) -> Result<(), crate::serial::PacketError> {
         VarInt(self.len() as i32).write(buffer)?;
         for item in self {
             item.write(buffer)?;
