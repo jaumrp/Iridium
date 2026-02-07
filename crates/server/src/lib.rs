@@ -31,7 +31,7 @@ impl Config {
 pub fn init_logging() {
     simple_logger::SimpleLogger::new()
         .with_colors(true)
-        .with_level(log::LevelFilter::Debug)
+        .with_level(log::LevelFilter::Info)
         .with_timestamp_format(format_description!("[year]-[month]-[day] [hour]:[minute]"))
         .init()
         .expect("failed to initialize logging");

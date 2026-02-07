@@ -1,3 +1,4 @@
+pub use components;
 pub use entity;
 pub use macros;
 pub use nbt;

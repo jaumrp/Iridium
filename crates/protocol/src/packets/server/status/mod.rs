@@ -1,9 +1,9 @@
 use async_trait::async_trait;
-use log::debug;
+use components::{Component, colors::Color};
 use macros::Packet;
 
 use crate::{
-    packets::{PlayerContext, client::status::StatusResponsePacket},
+    packets::{PlayerContext, client::status::StatusBuilder},
     serial::{PacketError, PacketHandler},
 };
 
@@ -18,9 +18,7 @@ impl PacketHandler for StatusRequestPacket {
         &mut self,
         ctx: &mut Context,
     ) -> Result<(), PacketError> {
-        debug!("Handling StatusRequestPacket: {:?}", self);
-
-        let packet = StatusResponsePacket::new();
+        let packet = StatusBuilder::new().protocol(ctx.get_protocol()).build();
 
         ctx.send_packet(&packet).await?;
 

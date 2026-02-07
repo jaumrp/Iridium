@@ -22,7 +22,7 @@ impl PacketHandler for HandshakePacket {
         &mut self,
         ctx: &mut Context,
     ) -> Result<(), PacketError> {
-        debug!("Handling HandshakePacket: {:?}", self);
+        ctx.set_protocol(self.protocol_version.0);
 
         match self.next_state.0 {
             1 => {

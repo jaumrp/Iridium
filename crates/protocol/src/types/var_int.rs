@@ -1,10 +1,11 @@
 use bytes::{BufMut, BytesMut};
+use serde::{Deserialize, Serialize};
 
 use crate::serial::{PacketError, PacketRead, PacketWrite};
 
 pub type VarIntType = i32;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct VarInt(pub VarIntType);
 
 impl PacketWrite for VarInt {

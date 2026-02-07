@@ -9,3 +9,6 @@ thiserror.workspace = true
 macros.workspace = true
 async-trait.workspace = true
 log.workspace = true
+components.workspace = true
+serde.workspace = true
+serde_json.workspace = true

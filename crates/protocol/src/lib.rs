@@ -11,11 +11,11 @@ pub mod serial;
 pub mod types;
 
 pub fn get_protocol_version() -> VarInt {
-    VarInt(773)
+    VarInt(774)
 }
 
 pub fn get_version_name() -> String {
-    "1.21.10".to_string()
+    "Iridium 1.21.11".to_string()
 }
 
 pub fn test() {

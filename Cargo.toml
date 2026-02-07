@@ -16,6 +16,7 @@ members = [
 [workspace.dependencies]
 tokio = { version = "1.49.0", features = ["full"] }
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 bytes = "1.0"
 uuid = { version = "1.20.0", features = ["v4", "serde"] }
 log = "0.4.29"
@@ -32,6 +33,7 @@ nbt = { path = "crates/nbt" }
 entity = { path = "crates/entity" }
 network = { path = "crates/network" }
 protocol = { path = "crates/protocol" }
+components = { path = "crates/components" }
 async-trait = "0.1.89"
 
 [dependencies]
@@ -41,3 +43,4 @@ nbt = { path = "crates/nbt" }
 entity = { path = "crates/entity" }
 network = { path = "crates/network" }
 protocol = { path = "crates/protocol" }
+components = { path = "crates/components" }
