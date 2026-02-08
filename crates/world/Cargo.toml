@@ -4,3 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+log.workspace = true
+serde.workspace = true
+ahash.workspace = true

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use components::{Component, colors::Color};
+use components::Component;
 use macros::Packet;
 
 use crate::{
@@ -18,7 +18,12 @@ impl PacketHandler for StatusRequestPacket {
         &mut self,
         ctx: &mut Context,
     ) -> Result<(), PacketError> {
-        let packet = StatusBuilder::new().protocol(ctx.get_protocol()).build();
+        let packet = StatusBuilder::new()
+            .motd(Component::modern_text_as_protocol(
+                "<red>reds<green>greens<bold><blue>blue\n<gradient:red:blue>Hello World</gradient>",
+                ctx.get_protocol(),
+            ))
+            .build();
 
         ctx.send_packet(&packet).await?;
 

@@ -10,7 +10,7 @@ pub struct Color {
 }
 
 impl Color {
-    const PALLETE: [(&str, i32, i32, i32); 16] = [
+    const PALETTE: [(&str, i32, i32, i32); 16] = [
         ("black", 0, 0, 0),
         ("dark_blue", 0, 0, 170),
         ("dark_green", 0, 170, 0),
@@ -30,14 +30,14 @@ impl Color {
     ];
 
     pub fn to_legacy_name(&self) -> &'static str {
-        let mut legacy_color = "white";
+        let mut legacy_color = "light_purple";
         let mut min_dist_sq = i32::MAX;
 
         let r = self.r as i32;
         let g = self.g as i32;
         let b = self.b as i32;
 
-        for (name, palette_r, palette_g, palette_b) in Color::PALLETE {
+        for (name, palette_r, palette_g, palette_b) in Color::PALETTE {
             let dr = r - palette_r;
             let dg = g - palette_g;
             let db = b - palette_b;
@@ -62,6 +62,11 @@ impl Color {
     pub fn from(hex: &str) -> Result<Self, String> {
         let hex = hex.trim_start_matches('#');
 
+        let color = Color::from_name(hex);
+        if color.is_some() {
+            return Ok(color.unwrap());
+        }
+
         let (r, g, b) = if hex.len() == 3 {
             let r = u8::from_str_radix(&hex[0..1].repeat(2), 16).map_err(|_| "invalid red")?;
             let g = u8::from_str_radix(&hex[1..2].repeat(2), 16).map_err(|_| "invalid green")?;
@@ -73,10 +78,6 @@ impl Color {
             let b = u8::from_str_radix(&hex[4..6], 16).map_err(|_| "invalid blue")?;
             (r, g, b)
         } else {
-            let color = Color::from_name(hex);
-            if color.is_some() {
-                return Ok(color.unwrap());
-            }
             return Err(format!(
                 "invalid hex color, expected 3 or 6 characters ({})",
                 hex

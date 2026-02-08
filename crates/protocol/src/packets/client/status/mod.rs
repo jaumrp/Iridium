@@ -1,9 +1,9 @@
-use components::{Component, colors::Color};
+use components::{Component, colors::Color, get_protocol_version, get_version_name};
 use macros::Packet;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::{get_protocol_version, get_version_name, types::var_int::VarInt};
+use crate::types::var_int::VarInt;
 
 #[derive(Serialize, Deserialize)]
 pub struct PlayerSample {
@@ -25,7 +25,7 @@ impl StatusBuilder {
     pub fn new() -> Self {
         Self {
             version_name: get_version_name(),
-            protocol: get_protocol_version(),
+            protocol: VarInt(get_protocol_version()),
             max_players: VarInt(20),
             online_players: VarInt(0),
             sample: Vec::new(),

@@ -1,4 +1,89 @@
-use crate::{Component, Style, colors::Color};
+use crate::{
+    Component, Style,
+    colors::Color,
+    get_protocol_version,
+    resolver::{ResolverContext, Tag, TagResolver},
+};
+
+impl Component {
+    pub fn modern_text_as_protocol(text: &str, protocol: i32) -> Component {
+        let mut root = Component::text("").protocol(protocol);
+
+        let mut style_stack = vec![Style::default()];
+        let mut cursor = 0;
+
+        let current_style =
+            |stack: &Vec<Style>| -> Style { stack.last().cloned().unwrap_or_default() };
+
+        let create_part = |content: &str, style: Style| -> Component {
+            let mut part = Component::text(content);
+            part.style = style;
+            part.protocol = protocol;
+            part
+        };
+
+        while let Some(offset) = text[cursor..].find('<') {
+            let start = cursor + offset;
+            if start > cursor {
+                let content = &text[cursor..start];
+                let part = create_part(content, current_style(&style_stack));
+                root.extra.push(part);
+            }
+
+            if let Some(end_offset) = text[start..].find(">") {
+                let end = start + end_offset;
+                let tag_content = &text[start + 1..end];
+                let tag = TagResolver::resolve(tag_content);
+
+                match tag {
+                    Tag::Logic(logic) => {
+                        let mut ctx = ResolverContext {
+                            text,
+                            cursor: end + 1,
+                            style_stack: &mut style_stack,
+                            out: &mut root.extra,
+                            protocol_version: protocol,
+                        };
+                        cursor = logic.resolve(&mut ctx);
+                    }
+                    Tag::Close => {
+                        if style_stack.len() > 1 {
+                            style_stack.pop();
+                        }
+                        cursor = end + 1;
+                    }
+                    Tag::Reset => {
+                        style_stack.clear();
+                        style_stack.push(Style::default());
+                        cursor = end + 1;
+                    }
+                    Tag::Invalid => {
+                        let part = create_part("<", current_style(&style_stack));
+                        root.extra.push(part);
+                        cursor = start + 1;
+                    }
+                }
+            } else {
+                let part = create_part("<", current_style(&style_stack));
+                root.extra.push(part);
+                cursor = start + 1;
+            }
+        }
+
+        if cursor < text.len() {
+            let content = &text[cursor..];
+            let mut part = Component::text(content);
+            part.style = current_style(&style_stack);
+            root.extra.push(part);
+        }
+
+        root
+    }
+
+    pub fn modern_text(text: &str) -> Component {
+        Self::modern_text_as_protocol(text, get_protocol_version())
+    }
+}
 
 impl Component {
     pub fn legacy_text(text: &str) -> Component {
@@ -47,62 +132,6 @@ impl Component {
 
         if idx < text.len() {
             let mut part = Component::text(&text[idx..]);
-            part.style = current_style;
-            root.extra.push(part);
-        }
-
-        root
-    }
-
-    pub fn modern_text(text: &str) -> Component {
-        let mut root = Component::text("");
-        let mut current_style = Style::default();
-
-        let mut cursor = 0;
-
-        while let Some(start_tag) = text[cursor..].find("<") {
-            let start = cursor + start_tag;
-
-            if let Some(end_tag) = text[start..].find(">") {
-                let end = start + end_tag;
-                let tag = &text[start + 1..end];
-
-                let mut new_style = current_style.clone();
-                let mut valid_tag = true;
-                match Color::from(tag) {
-                    Ok(color) => {
-                        new_style.color = Some(color);
-                    }
-                    Err(_) => {
-                        match tag {
-                            "bold" => new_style.bold = Some(true),
-                            "reset" => new_style = Style::default(),
-                            "italic" => new_style.italic = Some(true),
-                            "underlined" => new_style.underlined = Some(true),
-                            "strike" => new_style.strikethrough = Some(true),
-                            "obfuscated" => new_style.obfuscated = Some(true),
-                            s if s.starts_with("/") => new_style = Style::default(),
-                            _ => valid_tag = false,
-                        };
-                    }
-                }
-                if valid_tag {
-                    if start > cursor {
-                        let slice = &text[cursor..start];
-                        let mut part = Component::text(slice);
-                        part.style = current_style;
-                        root.extra.push(part);
-                    }
-                    current_style = new_style;
-                    cursor = end + 1;
-                    continue;
-                }
-            }
-            break;
-        }
-
-        if cursor < text.len() {
-            let mut part = Component::text(&text[cursor..]);
             part.style = current_style;
             root.extra.push(part);
         }

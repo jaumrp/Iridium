@@ -6,6 +6,7 @@ use crate::colors::Color;
 
 pub mod colors;
 pub mod parse;
+pub mod resolver;
 
 #[derive(Debug, Clone, PartialEq, Default, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -35,7 +36,19 @@ pub struct Style {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Content {
-    Text { text: String },
+    Text {
+        text: String,
+    },
+    Translatable {
+        key: String,
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        with: Vec<Component>,
+    },
+    Selector {
+        key: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        with: Option<Box<Component>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -58,7 +71,7 @@ impl Component {
             style: Style::default(),
             content,
             extra: Vec::new(),
-            protocol: 700,
+            protocol: 754,
         }
     }
 
@@ -66,8 +79,10 @@ impl Component {
         Self::new(Content::Text { text: text.into() })
     }
 
-    pub fn append<Child: Into<Component>>(mut self, child: Child) -> Self {
-        self.extra.push(child.into());
+    pub fn append<Child: Into<Component>>(mut self, child: Child) -> Component {
+        let mut child = child.into();
+        child.protocol = self.protocol;
+        self.extra.push(child);
         self
     }
 
@@ -93,6 +108,13 @@ impl Add for Component {
 impl Component {
     pub fn protocol(mut self, protocol: i32) -> Self {
         self.protocol = protocol;
+
+        self.extra = self
+            .extra
+            .into_iter()
+            .map(|e| e.protocol(protocol))
+            .collect();
+
         self
     }
 
@@ -153,6 +175,13 @@ impl Serialize for Component {
             Content::Text { text } => {
                 state.serialize_field("text", text)?;
             }
+            Content::Translatable { key, with } => {
+                state.serialize_field("translate", key)?;
+                if !with.is_empty() {
+                    state.serialize_field("with", with)?;
+                }
+            }
+            _ => {}
         }
 
         if let Some(color) = &self.style.color {
@@ -176,4 +205,12 @@ impl Serialize for Component {
 
         state.end()
     }
+}
+
+pub fn get_protocol_version() -> i32 {
+    774
+}
+
+pub fn get_version_name() -> String {
+    "Iridium 1.21.11".to_string()
 }

@@ -1,4 +1,5 @@
 use bytes::BytesMut;
+use components::get_protocol_version;
 
 use crate::{
     packets::server::configuration::handshake::HandshakePacket,
@@ -10,18 +11,10 @@ pub mod packets;
 pub mod serial;
 pub mod types;
 
-pub fn get_protocol_version() -> VarInt {
-    VarInt(774)
-}
-
-pub fn get_version_name() -> String {
-    "Iridium 1.21.11".to_string()
-}
-
 pub fn test() {
     let _my_int = VarInt(120);
     let _handshake = HandshakePacket {
-        protocol_version: get_protocol_version(),
+        protocol_version: VarInt(get_protocol_version()),
         server_address: "localhost".to_string(),
         server_port: 25565,
         next_state: VarInt(1),
