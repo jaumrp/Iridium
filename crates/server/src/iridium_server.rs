@@ -9,24 +9,26 @@ use tokio::{
     sync::broadcast,
 };
 
-use crate::Config;
+use crate::{ServerConfig, ServerContext};
 
 #[async_trait]
 pub trait IridiumServer {
-    async fn on_enable(&mut self) {}
-    async fn on_reload(&mut self) {}
-    async fn on_disable(&mut self) {
-        info!("exiting, bye!")
-    }
+    async fn on_enable(&mut self, _ctx: &mut ServerContext) {}
+    async fn on_reload(&mut self, _ctx: &mut ServerContext) {}
+    async fn on_disable(&mut self, _ctx: &mut ServerContext) {}
 }
 
-pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(
-    mut server: Server,
-    config: Config,
-) {
-    assert_config(&config);
+pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(mut server: Server) {
+    let mut ctx = ServerContext::new();
 
-    let address = format!("{}:{}", config.address, config.port);
+    if let Err(e) = ctx.config.load_config().await {
+        warn!("could not load server.yml: {}", e);
+    }
+
+    let (add, port) = assert_config(&ctx.config);
+
+    let address = format!("{}:{}", add, port);
+
     let listener = match TcpListener::bind(&address).await {
         Ok(listener) => {
             info!("🚀 iridium server booting on {}", address);
@@ -40,7 +42,14 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(
 
     let (shutdown_tex, _) = broadcast::channel::<()>(16);
 
-    server.on_enable().await;
+    log::info!("╭──────────────────────────────────────────╮");
+    log::info!("│ 💎 Iridium Server                        │");
+    log::info!("│ 🌍 Address: {:<28} │", add);
+    log::info!("│ 🔌 Port:    {:<28} │", port);
+    log::info!("╰──────────────────────────────────────────╯");
+
+    server.on_enable(&mut ctx).await;
+
     info!("server is running. Type 'stop' to exit.");
 
     let stdin = tokio::io::stdin();
@@ -66,7 +75,7 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(
                     }
                     if line == "reload" {
                         warn!("Reloading Iridium Server...");
-                        server.on_reload().await;
+                        server.on_reload(&mut ctx).await;
                         info!("reloaded Iridium server");
                     }
                 }
@@ -84,19 +93,19 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(
     }
 
     warn!("Shutting down Iridium Server...");
-    server.on_disable().await;
+    server.on_disable(&mut ctx).await;
 }
 
-pub fn assert_config(config: &Config) {
-    if config.address.trim().is_empty() {
+pub fn assert_config(config: &ServerConfig) -> (&str, i64) {
+    let address = config.get_str("server.host").unwrap_or_else(|| "0.0.0.0");
+    let port = config.get_int("server.port").unwrap_or(25565);
+
+    if address.trim().is_empty() {
         panic!("address cannot be empty");
     }
 
-    if config.id.trim().is_empty() {
-        panic!("id cannot be empty");
-    }
-
-    if config.port < 1024 || config.port >= 65535 {
+    if port < 1024 || port >= 65535 {
         panic!("port must be between 1024 and 65535");
     }
+    return (address, port);
 }

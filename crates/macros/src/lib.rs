@@ -35,19 +35,10 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 
             iridium::server::init_logging();
 
-            let config = iridium::server::Config::load();
-
-            iridium::server::log::info!("╭──────────────────────────────────────────╮");
-            iridium::server::log::info!("│ 💎 Iridium Server                        │");
-            iridium::server::log::info!("│ 🆔 ID:      {:<28} │", config.id);
-            iridium::server::log::info!("│ 🌍 Address: {:<28} │", config.address);
-            iridium::server::log::info!("│ 🔌 Port:    {:<28} │", config.port);
-            iridium::server::log::info!("╰──────────────────────────────────────────╯");
-
             let rt = iridium::server::tokio::runtime::Builder::new_multi_thread().enable_all().build().expect("failed to create runtime");
             rt.block_on(async {
                 let server_instance = #inner_name().await;
-                iridium::server::iridium_server::bootstrap(server_instance, config).await;
+                iridium::server::iridium_server::bootstrap(server_instance).await;
             })
         }
         #[allow(non_snake_case)]
@@ -57,6 +48,12 @@ pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
 
     TokenStream::from(out)
 }
+//iridium::server::log::info!("╭──────────────────────────────────────────╮");
+//iridium::server::log::info!("│ 💎 Iridium Server                        │");
+//iridium::server::log::info!("│ 🆔 ID:      {:<28} │", config.id);
+//iridium::server::log::info!("│ 🌍 Address: {:<28} │", config.address);
+//iridium::server::log::info!("│ 🔌 Port:    {:<28} │", config.port);
+//iridium::server::log::info!("╰──────────────────────────────────────────╯");
 
 #[proc_macro_derive(Packet, attributes(packet))]
 pub fn packet_derive(input: TokenStream) -> TokenStream {

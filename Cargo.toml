@@ -35,7 +35,8 @@ network = { path = "crates/network" }
 protocol = { path = "crates/protocol" }
 components = { path = "crates/components" }
 async-trait = "0.1.89"
-ahash = "=0.8.12"
+ahash = { version = "0.8.12", features = ["serde"] }
+serde_yaml = "0.9.34"
 
 [dependencies]
 server = { path = "crates/server" }
