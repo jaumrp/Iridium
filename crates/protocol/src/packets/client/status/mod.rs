@@ -19,6 +19,7 @@ pub struct StatusBuilder {
     sample: Vec<PlayerSample>,
     motd: Component,
     favicon: Option<String>,
+    enfocers_secure_chat: Option<bool>,
 }
 
 impl StatusBuilder {
@@ -31,6 +32,7 @@ impl StatusBuilder {
             sample: Vec::new(),
             motd: Component::modern_text("Iridium Server").color(Color::from("#692aa8").unwrap()),
             favicon: None,
+            enfocers_secure_chat: Some(false),
         }
     }
 
@@ -84,6 +86,11 @@ impl StatusBuilder {
         self
     }
 
+    pub fn enfocers_secure_chat(mut self, enfocers_secure_chat: Option<bool>) -> Self {
+        self.enfocers_secure_chat = enfocers_secure_chat;
+        self
+    }
+
     pub fn build(self) -> StatusResponsePacket {
         let mut json = json!({
             "version": {
@@ -95,6 +102,7 @@ impl StatusBuilder {
                 "online": self.online_players,
                 "sample": self.sample
             },
+            "enforcersSecureChat": self.enfocers_secure_chat,
             "description": self.motd,
         });
 

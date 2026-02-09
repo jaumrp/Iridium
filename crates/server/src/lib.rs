@@ -1,17 +1,21 @@
 pub mod iridium_server;
-use std::{env, fs, path::Path};
+use std::{env, fs, path::Path, sync::Arc};
 
 use ahash::AHashMap;
+use events::EventBus;
 pub use log;
 use serde::{Deserialize, Serialize};
 pub use tokio;
 
 use time::macros::format_description;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Clone)]
 pub struct ServerContext {
     pub path: String,
     pub config: ServerConfig,
+
+    #[serde(skip)]
+    pub event_bus: Arc<events::EventBus<ServerContext>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -129,7 +133,13 @@ impl ServerContext {
 
         let config = ServerConfig::new(config_path.to_owned());
 
-        Self { path, config }
+        let event_bus = Arc::new(EventBus::new());
+
+        Self {
+            path,
+            config,
+            event_bus: event_bus.clone(),
+        }
     }
 }
 

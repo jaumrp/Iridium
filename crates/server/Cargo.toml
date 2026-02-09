@@ -14,3 +14,4 @@ network.workspace = true
 serde_yaml.workspace = true
 serde.workspace = true
 ahash.workspace = true
+events.workspace = true

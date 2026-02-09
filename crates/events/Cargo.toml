@@ -1,0 +1,10 @@
+[package]
+name = "events"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+components.workspace = true
+parking_lot.workspace = true
+ahash.workspace = true
+macros.workspace = true

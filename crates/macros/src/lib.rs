@@ -2,7 +2,9 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data, DeriveInput, Fields, ItemFn, LitInt, parse_macro_input};
+use syn::{
+    Data, DeriveInput, Fields, ItemFn, ItemStruct, LitInt, parse::Parser, parse_macro_input,
+};
 
 #[proc_macro_attribute]
 pub fn main(_args: TokenStream, item: TokenStream) -> TokenStream {
@@ -129,4 +131,59 @@ pub fn packet_derive(input: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
+}
+
+#[proc_macro_attribute]
+pub fn event(_: TokenStream, input: TokenStream) -> TokenStream {
+    let mut item_struct = parse_macro_input!(input as ItemStruct);
+    let struct_name = &item_struct.ident;
+
+    if let syn::Fields::Named(ref mut fields) = item_struct.fields {
+        fields.named.push(
+            syn::Field::parse_named
+                .parse2(quote! {
+                    pub is_canceled: bool
+                })
+                .unwrap(),
+        );
+    }
+
+    let impl_event = quote! {
+
+      impl events::Event for #struct_name {
+          fn as_any(&self) -> &dyn std::any::Any {
+              self
+          }
+
+          fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+              self
+          }
+
+          fn name(&self) -> &'static str {
+              stringify!(#struct_name)
+          }
+      }
+    };
+
+    let impl_cancelable = quote! {
+
+        impl events::Cancelable for #struct_name {
+            fn is_canceled(&self) -> bool {
+                self.is_canceled
+            }
+
+            fn set_canceled(&mut self, cancelled: bool) {
+                self.is_canceled = cancelled;
+            }
+        }
+
+    };
+
+    let out = quote! {
+        #item_struct
+        #impl_event
+        #impl_cancelable
+    };
+
+    out.into()
 }

@@ -1,3 +1,12 @@
 server:
   host: 0.0.0.0
   port: 25566
+
+world:
+  name: "world"
+  seed: "1234567890"
+  type: "flat"
+  size: 29999984
+  pregenerator:
+    radius: 64
+    threads: 4

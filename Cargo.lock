@@ -99,6 +99,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "events"
+version = "0.1.0"
+dependencies = [
+ "ahash",
+ "components",
+ "macros",
+ "parking_lot",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -132,6 +142,7 @@ version = "0.1.0"
 dependencies = [
  "components",
  "entity",
+ "events",
  "macros",
  "nbt",
  "network",
@@ -202,7 +213,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "events",
  "log",
+ "macros",
  "protocol",
  "tokio",
 ]
@@ -385,6 +398,7 @@ dependencies = [
  "ahash",
  "async-trait",
  "dotenvy",
+ "events",
  "log",
  "network",
  "serde",
