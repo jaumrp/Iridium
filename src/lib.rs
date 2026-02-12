@@ -1,5 +1,6 @@
 pub use components;
 pub use entity;
+pub use events;
 pub use macros;
 pub use nbt;
 pub use network;

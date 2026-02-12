@@ -1,9 +1,8 @@
 use components::{Component, colors::Color, get_protocol_version, get_version_name};
 use macros::Packet;
+use protocol::types::var_int::VarInt;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-
-use crate::types::var_int::VarInt;
 
 #[derive(Serialize, Deserialize)]
 pub struct PlayerSample {

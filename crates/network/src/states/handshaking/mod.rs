@@ -1,12 +1,14 @@
 use std::io::Cursor;
 
-use async_trait::async_trait;
-use protocol::{
-    packets::server::configuration::handshake::HandshakePacket,
-    serial::{PacketError, PacketHandler, PacketRead},
-};
+use crate::packets::PacketHandler;
 
-use crate::{PlayerConnection, states::PacketDispatcher};
+use async_trait::async_trait;
+use protocol::serial::{PacketError, PacketRead};
+
+use crate::{
+    PlayerConnection, packets::server::configuration::handshake::HandshakePacket,
+    states::PacketDispatcher,
+};
 
 #[derive(Debug)]
 pub enum HandshakePacketHandler {

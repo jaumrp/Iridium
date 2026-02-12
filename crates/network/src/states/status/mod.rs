@@ -2,12 +2,15 @@ use std::io::Cursor;
 
 use async_trait::async_trait;
 use log::debug;
-use protocol::{
-    packets::server::status::{StatusRequestPacket, ping::PingRequestPacket},
-    serial::{PacketError, PacketHandler, PacketRead},
-};
+use protocol::serial::{PacketError, PacketRead};
 
-use crate::{PlayerConnection, states::PacketDispatcher};
+use crate::packets::PacketHandler;
+
+use crate::{
+    PlayerConnection,
+    packets::server::status::{StatusRequestPacket, ping::PingRequestPacket},
+    states::PacketDispatcher,
+};
 
 #[derive(Debug)]
 pub enum StatusPacketHandler {

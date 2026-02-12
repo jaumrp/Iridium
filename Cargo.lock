@@ -213,10 +213,13 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "components",
  "events",
  "log",
  "macros",
  "protocol",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

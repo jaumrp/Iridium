@@ -1,11 +1,9 @@
 use async_trait::async_trait;
 use log::debug;
 use macros::Packet;
+use protocol::serial::PacketError;
 
-use crate::{
-    packets::PlayerContext,
-    serial::{PacketError, PacketHandler},
-};
+use crate::{packets::PacketHandler, player_connection::PlayerConnection};
 
 #[derive(Packet, Debug)]
 #[packet(id = 0x01)]
@@ -21,10 +19,7 @@ pub struct PingRequestPacket {
 
 #[async_trait]
 impl PacketHandler for PingRequestPacket {
-    async fn handle<Context: PlayerContext>(
-        &mut self,
-        ctx: &mut Context,
-    ) -> Result<(), PacketError> {
+    async fn handle(&mut self, ctx: &mut PlayerConnection) -> Result<(), PacketError> {
         debug!("Received ping response packet");
         let response = PingResponsePacket {
             payload: self.payload,

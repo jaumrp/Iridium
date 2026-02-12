@@ -90,38 +90,38 @@ pub fn packet_derive(input: TokenStream) -> TokenStream {
         let name = &field.ident;
         let ty = &field.ty;
         quote! {
-            #name: <#ty as crate::serial::PacketRead>::read(buffer)?,
+            #name: <#ty as protocol::serial::PacketRead>::read(buffer)?,
         }
     });
 
     let write = fields.iter().map(|field| {
         let name = &field.ident;
         quote! {
-            crate::serial::PacketWrite::write(&self.#name, buffer)?;
+            protocol::serial::PacketWrite::write(&self.#name, buffer)?;
         }
     });
 
     let write_id = if let Some(id) = id {
         quote! {
-            crate::serial::PacketWrite::write(&crate::types::var_int::VarInt(#id), buffer)?;
+            protocol::serial::PacketWrite::write(&protocol::types::var_int::VarInt(#id), buffer)?;
         }
     } else {
         quote! {
-            crate::serial::PacketWrite::write(&crate::types::var_int::VarInt(0x00), buffer)?;
+            protocol::serial::PacketWrite::write(&protocol::types::var_int::VarInt(0x00), buffer)?;
         }
     };
 
     let expanded = quote! {
-        impl crate::serial::PacketRead for #name {
-            fn read<Buffer: bytes::Buf>(buffer: &mut Buffer) -> Result<Self, crate::serial::PacketError> {
+        impl protocol::serial::PacketRead for #name {
+            fn read<Buffer: bytes::Buf>(buffer: &mut Buffer) -> Result<Self, protocol::serial::PacketError> {
                 Ok(Self {
                     #(#read)*
                 })
             }
         }
 
-        impl crate::serial::PacketWrite for #name {
-            fn write(&self, buffer: &mut bytes::BytesMut) -> Result<(), crate::serial::PacketError> {
+        impl protocol::serial::PacketWrite for #name {
+            fn write(&self, buffer: &mut bytes::BytesMut) -> Result<(), protocol::serial::PacketError> {
                 #write_id
                 #(#write)*
                 Ok(())

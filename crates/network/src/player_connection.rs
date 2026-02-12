@@ -1,10 +1,9 @@
 use std::io::Cursor;
 
-use async_trait::async_trait;
 use bytes::{Buf, BytesMut};
 use log::{error, warn};
 use protocol::{
-    packets::{ConnectionState, PlayerContext},
+    ConnectionState,
     serial::{PacketError, PacketRead, PacketWrite},
     types::var_int::VarInt,
 };
@@ -114,21 +113,26 @@ impl PlayerConnection {
     }
 }
 
-#[async_trait]
-impl PlayerContext for PlayerConnection {
-    fn get_protocol(&self) -> i32 {
+impl PlayerConnection {
+    pub fn get_protocol(&self) -> i32 {
         self.protocol
     }
 
-    fn get_state(&self) -> &ConnectionState {
+    pub fn get_state(&self) -> &ConnectionState {
         return &self.state;
     }
 
-    fn set_state(&mut self, state: ConnectionState) {
+    pub fn set_state(&mut self, state: ConnectionState) {
         self.state = state;
     }
 
-    async fn send_packet(
+    pub fn set_protocol(&mut self, protocol: i32) {
+        self.protocol = protocol;
+    }
+}
+
+impl PlayerConnection {
+    pub async fn send_packet(
         &mut self,
         packet: &dyn protocol::serial::PacketWrite,
     ) -> Result<(), PacketError> {
@@ -147,9 +151,5 @@ impl PlayerContext for PlayerConnection {
         self.socket.flush().await?;
 
         Ok(())
-    }
-
-    fn set_protocol(&mut self, protocol: i32) {
-        self.protocol = protocol;
     }
 }

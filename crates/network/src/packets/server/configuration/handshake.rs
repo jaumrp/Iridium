@@ -1,12 +1,9 @@
 use async_trait::async_trait;
 use log::debug;
 use macros::Packet;
+use protocol::{ConnectionState, serial::PacketError, types::var_int::VarInt};
 
-use crate::{
-    packets::PlayerContext,
-    serial::{PacketError, PacketHandler},
-    types::var_int::VarInt,
-};
+use crate::{packets::PacketHandler, player_connection::PlayerConnection};
 
 #[derive(Packet, Debug)]
 pub struct HandshakePacket {
@@ -18,18 +15,15 @@ pub struct HandshakePacket {
 
 #[async_trait]
 impl PacketHandler for HandshakePacket {
-    async fn handle<Context: PlayerContext>(
-        &mut self,
-        ctx: &mut Context,
-    ) -> Result<(), PacketError> {
+    async fn handle(&mut self, ctx: &mut PlayerConnection) -> Result<(), PacketError> {
         ctx.set_protocol(self.protocol_version.0);
 
         match self.next_state.0 {
             1 => {
-                ctx.set_state(crate::packets::ConnectionState::Status);
+                ctx.set_state(ConnectionState::Status);
             }
             2 => {
-                ctx.set_state(crate::packets::ConnectionState::Login);
+                ctx.set_state(ConnectionState::Login);
             }
             3 => {
                 debug!("Transfer is not supported");

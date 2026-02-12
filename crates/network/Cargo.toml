@@ -11,3 +11,6 @@ log.workspace = true
 async-trait.workspace = true
 macros.workspace = true
 events.workspace = true
+components.workspace = true
+serde.workspace = true
+serde_json.workspace = true
