@@ -1,7 +1,4 @@
-use std::{
-    any::{Any, TypeId},
-    io::Error,
-};
+use std::any::{Any, TypeId};
 
 use ahash::AHashMap;
 use parking_lot::RwLock;
@@ -16,6 +13,12 @@ pub enum EventPriority {
     Highest,
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum EventError {
+    #[error("Unexpected error: {0}")]
+    UnexpectedType(String),
+}
+
 pub trait Cancelable {
     fn is_canceled(&self) -> bool;
     fn set_canceled(&mut self, canceled: bool);
@@ -28,27 +31,23 @@ pub trait Event: Any + Send + Sync {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
-struct RegisteredHandler<Context> {
+struct RegisteredHandler {
     priority: EventPriority,
-    handler: Box<dyn Fn(&mut dyn Any, &mut Context) -> Result<(), Error> + Send + Sync>,
+    handler: Box<dyn Fn(&mut dyn Any) -> Result<(), EventError> + Send + Sync>,
 }
 
-pub struct EventBus<Context> {
-    listeners: RwLock<AHashMap<TypeId, Vec<RegisteredHandler<Context>>>>,
+pub struct EventBus {
+    listeners: RwLock<AHashMap<TypeId, Vec<RegisteredHandler>>>,
 }
 
-impl<Context> EventBus<Context> {
+impl EventBus {
     pub fn new() -> Self {
         Self {
             listeners: RwLock::new(AHashMap::new()),
         }
     }
 
-    pub fn emit<EventContext>(
-        &self,
-        event: &mut EventContext,
-        ctx: &mut Context,
-    ) -> Result<(), Error>
+    pub fn emit<EventContext>(&self, event: &mut EventContext) -> Result<(), EventError>
     where
         EventContext: Event + Cancelable + 'static,
     {
@@ -60,7 +59,7 @@ impl<Context> EventBus<Context> {
                 if event.is_canceled() && wrapper.priority != EventPriority::Monitor {
                     continue;
                 }
-                (wrapper.handler)(event.as_any_mut(), ctx)?;
+                (wrapper.handler)(event.as_any_mut())?;
             }
         }
 
@@ -70,8 +69,7 @@ impl<Context> EventBus<Context> {
     pub fn subscribe<EventContext, Handler>(&self, handler: Handler)
     where
         EventContext: Event + 'static,
-        Handler: Fn(&mut EventContext, &mut Context) -> Result<(), Error> + Send + Sync + 'static,
-        Context: 'static,
+        Handler: Fn(&mut EventContext) -> Result<(), EventError> + Send + Sync + 'static,
     {
         self.subscribe_with_priority(EventPriority::Normal, handler);
     }
@@ -82,17 +80,22 @@ impl<Context> EventBus<Context> {
         handler: Handler,
     ) where
         EventContext: Event + 'static,
-        Handler: Fn(&mut EventContext, &mut Context) -> Result<(), Error> + Send + Sync + 'static,
-        Context: 'static,
+        Handler: Fn(&mut EventContext) -> Result<(), EventError> + Send + Sync + 'static,
     {
         let mut listeners = self.listeners.write();
         let type_id = TypeId::of::<EventContext>();
 
-        let boxed_handler = Box::new(move |event_any: &mut dyn Any, ctx: &mut Context| {
+        let boxed_handler = Box::new(move |event_any: &mut dyn Any| {
             if let Some(event) = event_any.downcast_mut::<EventContext>() {
-                handler(event, ctx)
+                handler(event)
             } else {
-                Ok(())
+                let name = event_any
+                    .downcast_ref::<EventContext>()
+                    .unwrap()
+                    .name()
+                    .to_string();
+
+                return Err(EventError::UnexpectedType(name));
             }
         });
         let entry = listeners.entry(type_id).or_default();

@@ -8,3 +8,4 @@ components.workspace = true
 parking_lot.workspace = true
 ahash.workspace = true
 macros.workspace = true
+thiserror.workspace = true

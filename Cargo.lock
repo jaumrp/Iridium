@@ -106,6 +106,7 @@ dependencies = [
  "components",
  "macros",
  "parking_lot",
+ "thiserror",
 ]
 
 [[package]]
@@ -404,6 +405,7 @@ dependencies = [
  "events",
  "log",
  "network",
+ "protocol",
  "serde",
  "serde_yaml",
  "simple_logger",

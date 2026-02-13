@@ -15,7 +15,7 @@ pub struct ServerContext {
     pub config: ServerConfig,
 
     #[serde(skip)]
-    pub event_bus: Arc<events::EventBus<ServerContext>>,
+    pub event_bus: Arc<events::EventBus>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

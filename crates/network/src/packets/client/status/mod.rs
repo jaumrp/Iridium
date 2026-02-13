@@ -18,7 +18,7 @@ pub struct StatusBuilder {
     sample: Vec<PlayerSample>,
     motd: Component,
     favicon: Option<String>,
-    enfocers_secure_chat: Option<bool>,
+    enforcers_secure_chat: Option<bool>,
 }
 
 impl StatusBuilder {
@@ -31,8 +31,12 @@ impl StatusBuilder {
             sample: Vec::new(),
             motd: Component::modern_text("Iridium Server").color(Color::from("#692aa8").unwrap()),
             favicon: None,
-            enfocers_secure_chat: Some(false),
+            enforcers_secure_chat: Some(false),
         }
+    }
+
+    pub fn get_protocol_version(&self) -> VarInt {
+        VarInt(self.motd.protocol)
     }
 
     pub fn version<Version: Into<String>>(mut self, name: Version, protocol: i32) -> Self {
@@ -41,23 +45,23 @@ impl StatusBuilder {
         self
     }
 
-    pub fn max_players(mut self, max_players: i32) -> Self {
+    pub fn max_players(&mut self, max_players: i32) -> &mut Self {
         self.max_players = VarInt(max_players);
         self
     }
 
-    pub fn online_players(mut self, online_players: i32) -> Self {
+    pub fn online_players(&mut self, online_players: i32) -> &mut Self {
         self.online_players = VarInt(online_players);
         self
     }
 
-    pub fn players(mut self, online_players: i32, max_players: i32) -> Self {
+    pub fn players(&mut self, online_players: i32, max_players: i32) -> &mut Self {
         self.online_players = VarInt(online_players);
         self.max_players = VarInt(max_players);
         self
     }
 
-    pub fn add_sample<Sample: Into<String>>(mut self, sample: Sample) -> Self {
+    pub fn add_sample<Sample: Into<String>>(&mut self, sample: Sample) -> &mut Self {
         self.sample.push(PlayerSample {
             name: sample.into(),
             id: "00000000-0000-0000-0000-000000000000".into(), // uuid
@@ -65,32 +69,32 @@ impl StatusBuilder {
         self
     }
 
-    pub fn sample(mut self, sample: Vec<PlayerSample>) -> Self {
+    pub fn sample(&mut self, sample: Vec<PlayerSample>) -> &mut Self {
         self.sample = sample;
         self
     }
 
-    pub fn motd(mut self, motd: Component) -> Self {
+    pub fn motd(&mut self, motd: Component) -> &mut Self {
         self.motd = motd;
         self
     }
 
-    pub fn protocol(mut self, protocol: i32) -> Self {
+    pub fn protocol(&mut self, protocol: i32) -> &mut Self {
         self.motd.protocol = protocol;
         self
     }
 
-    pub fn favicon(mut self, favicon: Option<String>) -> Self {
+    pub fn favicon(&mut self, favicon: Option<String>) -> &mut Self {
         self.favicon = favicon;
         self
     }
 
-    pub fn enfocers_secure_chat(mut self, enfocers_secure_chat: Option<bool>) -> Self {
-        self.enfocers_secure_chat = enfocers_secure_chat;
+    pub fn enforcers_secure_chat(&mut self, enforcers_secure_chat: Option<bool>) -> &mut Self {
+        self.enforcers_secure_chat = enforcers_secure_chat;
         self
     }
 
-    pub fn build(self) -> StatusResponsePacket {
+    pub fn build(&mut self) -> StatusResponsePacket {
         let mut json = json!({
             "version": {
                 "name": self.version_name,
@@ -101,12 +105,12 @@ impl StatusBuilder {
                 "online": self.online_players,
                 "sample": self.sample
             },
-            "enforcersSecureChat": self.enfocers_secure_chat,
+            "enforcersSecureChat": self.enforcers_secure_chat,
             "description": self.motd,
         });
 
-        if let Some(favicon) = self.favicon {
-            json["favicon"] = favicon.into();
+        if let Some(favicon) = &self.favicon {
+            json["favicon"] = favicon.as_str().into();
         }
 
         StatusResponsePacket {

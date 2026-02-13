@@ -61,8 +61,9 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(mut server
                 match accept_result {
                     Ok((socket, _address)) => {
                         let rx = shutdown_tex.subscribe();
+                        let event_bus = ctx.event_bus.clone();
                         tokio::spawn(async move {
-                            handle_connection(socket, rx).await;
+                            handle_connection(socket, rx, event_bus).await;
                         });
                     },
                     Err(error) => error!("failed to accept connection: {}", error),

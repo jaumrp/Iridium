@@ -17,6 +17,9 @@ pub enum PacketError {
     #[error("Unknown packet")]
     UnknownPacket,
 
+    #[error("{0} not implemented")]
+    NotImplemented(String),
+
     #[error("Invalid data")]
     InvalidData,
 }

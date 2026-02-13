@@ -1,7 +1,8 @@
-use std::io::Cursor;
+use std::{io::Cursor, sync::Arc};
 
 use bytes::{Buf, BytesMut};
-use log::{error, warn};
+use events::EventBus;
+use log::error;
 use protocol::{
     ConnectionState,
     serial::{PacketError, PacketRead, PacketWrite},
@@ -17,22 +18,29 @@ use tokio::{
 use crate::states::{
     PacketDispatcher, handshaking::HandshakePacketHandler, status::StatusPacketHandler,
 };
+
 pub struct PlayerConnection {
     socket: TcpStream,
     buffer: BytesMut,
     state: ConnectionState,
     shutdown_tx: broadcast::Receiver<()>,
     protocol: i32,
+    event_bus: Arc<EventBus>,
 }
 
 impl PlayerConnection {
-    pub fn new(socket: TcpStream, shutdown_tx: broadcast::Receiver<()>) -> Self {
+    pub fn new(
+        socket: TcpStream,
+        shutdown_tx: broadcast::Receiver<()>,
+        event_bus: Arc<EventBus>,
+    ) -> Self {
         PlayerConnection {
             socket,
             buffer: BytesMut::with_capacity(4096),
             state: ConnectionState::Handshaking,
             shutdown_tx,
             protocol: 0,
+            event_bus,
         }
     }
 
@@ -73,7 +81,6 @@ impl PlayerConnection {
 
                                     if let Err(e) = self.handle_packet(&mut packet_data).await {
                                         match e {
-                                            PacketError::Incomplete => {}
                                             _ => error!("Error handling packet: {}", e),
                                         }
                                         return;
@@ -102,10 +109,10 @@ impl PlayerConnection {
                 handler.dispatch_packet(self).await?;
             }
             ConnectionState::Login => {
-                warn!("login state is not implemented");
+                return Err(PacketError::NotImplemented("login".to_string()));
             }
             ConnectionState::Play => {
-                warn!("play state is not implemented");
+                return Err(PacketError::NotImplemented("play".to_string()));
             }
         }
 
@@ -128,6 +135,10 @@ impl PlayerConnection {
 
     pub fn set_protocol(&mut self, protocol: i32) {
         self.protocol = protocol;
+    }
+
+    pub fn event_bus(&self) -> &EventBus {
+        &self.event_bus
     }
 }
 
