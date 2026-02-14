@@ -4,3 +4,6 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+bytes.workspace = true
+byteorder.workspace = true
+ahash.workspace = true

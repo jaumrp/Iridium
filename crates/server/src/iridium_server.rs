@@ -25,7 +25,9 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(mut server
         warn!("could not load server.yml: {}", e);
     }
 
-    let (add, port) = assert_config(&ctx.config);
+    let (add, port) = assert_config(&ctx.config).unwrap_or_else(|| {
+        return ("0.0.0.0", 25565);
+    });
 
     let address = format!("{}:{}", add, port);
 
@@ -97,16 +99,16 @@ pub async fn bootstrap<Server: IridiumServer + Send + Sync + 'static>(mut server
     server.on_disable(&mut ctx).await;
 }
 
-pub fn assert_config(config: &ServerConfig) -> (&str, i64) {
+pub fn assert_config(config: &ServerConfig) -> Option<(&str, i64)> {
     let address = config.get_str("server.host").unwrap_or_else(|| "0.0.0.0");
-    let port = config.get_int("server.port").unwrap_or(25565);
+    let port = config.get_int("server.port").unwrap_or_else(|| 25565);
 
     if address.trim().is_empty() {
-        panic!("address cannot be empty");
+        return None;
     }
 
     if port < 1024 || port >= 65535 {
-        panic!("port must be between 1024 and 65535");
+        return None;
     }
-    return (address, port);
+    return Some((address, port));
 }

@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use protocol::serial::{PacketError, PacketRead};
 
 use crate::{
-    PlayerConnection, packets::server::configuration::handshake::HandshakePacket,
+    PlayerConnection, packets::server::handshake::handshake::HandshakePacket,
     states::PacketDispatcher,
 };
 

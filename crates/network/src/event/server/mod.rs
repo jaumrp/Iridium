@@ -1,6 +1,6 @@
 use macros::event;
 
-use crate::{packets::client::status::StatusBuilder, player_connection::PlayerConnection};
+use crate::packets::client::status::StatusBuilder;
 
 #[event]
 pub struct ServerListPingEvent {

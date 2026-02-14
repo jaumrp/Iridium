@@ -6,4 +6,5 @@ pub enum ConnectionState {
     Login,
     Status,
     Play,
+    Configuration,
 }

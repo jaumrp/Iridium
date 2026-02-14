@@ -1,4 +1,4 @@
-use std::any::{Any, TypeId};
+use std::any::{Any, TypeId, type_name};
 
 use ahash::AHashMap;
 use parking_lot::RwLock;
@@ -89,13 +89,9 @@ impl EventBus {
             if let Some(event) = event_any.downcast_mut::<EventContext>() {
                 handler(event)
             } else {
-                let name = event_any
-                    .downcast_ref::<EventContext>()
-                    .unwrap()
-                    .name()
-                    .to_string();
-
-                return Err(EventError::UnexpectedType(name));
+                return Err(EventError::UnexpectedType(
+                    type_name::<EventContext>().to_string(),
+                ));
             }
         });
         let entry = listeners.entry(type_id).or_default();

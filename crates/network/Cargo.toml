@@ -14,3 +14,5 @@ events.workspace = true
 components.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+entity.workspace = true
+uuid.workspace = true

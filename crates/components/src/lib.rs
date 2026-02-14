@@ -169,7 +169,7 @@ impl Serialize for Component {
     {
         let is_modern_protocol = self.protocol >= 735;
 
-        let mut state = serializer.serialize_struct("Component", 0)?;
+        let mut state = serializer.serialize_struct("Component", 1)?;
 
         match &self.content {
             Content::Text { text } => {

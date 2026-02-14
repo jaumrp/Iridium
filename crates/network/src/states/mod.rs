@@ -3,6 +3,7 @@ use protocol::serial::PacketError;
 
 use crate::PlayerConnection;
 
+pub mod configuration;
 pub mod handshaking;
 pub mod login;
 pub mod play;

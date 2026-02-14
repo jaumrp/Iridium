@@ -3,6 +3,7 @@ use protocol::serial::PacketError;
 
 use crate::player_connection::PlayerConnection;
 
+pub mod bidirectional;
 pub mod client;
 pub mod server;
 

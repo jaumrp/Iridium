@@ -22,6 +22,9 @@ pub enum PacketError {
 
     #[error("Invalid data")]
     InvalidData,
+
+    #[error("Invalid protocol version")]
+    InvalidProtocol,
 }
 
 pub trait PacketWrite: Send + Sync {

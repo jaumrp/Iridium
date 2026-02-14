@@ -16,16 +16,21 @@ use tokio::{
 };
 
 use crate::states::{
-    PacketDispatcher, handshaking::HandshakePacketHandler, status::StatusPacketHandler,
+    PacketDispatcher, configuration::ConfigurationPacketHandler,
+    handshaking::HandshakePacketHandler, login::LoginPacketHandler, status::StatusPacketHandler,
 };
 
 pub struct PlayerConnection {
     socket: TcpStream,
     buffer: BytesMut,
+    writer: BytesMut,
+    packet_buffer: BytesMut,
     state: ConnectionState,
     shutdown_tx: broadcast::Receiver<()>,
     protocol: i32,
     event_bus: Arc<EventBus>,
+    username: Option<String>,
+    uuid: Option<uuid::Uuid>,
 }
 
 impl PlayerConnection {
@@ -37,10 +42,14 @@ impl PlayerConnection {
         PlayerConnection {
             socket,
             buffer: BytesMut::with_capacity(4096),
+            writer: BytesMut::with_capacity(4096),
+            packet_buffer: BytesMut::with_capacity(4096),
             state: ConnectionState::Handshaking,
             shutdown_tx,
             protocol: 0,
             event_bus,
+            username: None,
+            uuid: None,
         }
     }
 
@@ -109,7 +118,12 @@ impl PlayerConnection {
                 handler.dispatch_packet(self).await?;
             }
             ConnectionState::Login => {
-                return Err(PacketError::NotImplemented("login".to_string()));
+                let mut handler = LoginPacketHandler::from_id(self, packet_id, &mut cursor).await?;
+                handler.dispatch_packet(self).await?;
+            }
+            ConnectionState::Configuration => {
+                let mut handler = ConfigurationPacketHandler::from_id(packet_id, &mut cursor)?;
+                handler.dispatch_packet(self).await?;
             }
             ConnectionState::Play => {
                 return Err(PacketError::NotImplemented("play".to_string()));
@@ -143,22 +157,40 @@ impl PlayerConnection {
 }
 
 impl PlayerConnection {
+    pub fn register(&mut self, username: String, uuid: uuid::Uuid) {
+        if self.username.is_some() && self.uuid.is_some() {
+            return;
+        }
+        self.username = Some(username);
+        self.uuid = Some(uuid);
+    }
+
+    pub fn get_username(&self) -> Option<&String> {
+        self.username.as_ref()
+    }
+
+    pub fn get_uuid(&self) -> Option<&uuid::Uuid> {
+        self.uuid.as_ref()
+    }
+}
+
+impl PlayerConnection {
     pub async fn send_packet(
         &mut self,
         packet: &dyn protocol::serial::PacketWrite,
     ) -> Result<(), PacketError> {
-        let mut body = BytesMut::new();
+        self.packet_buffer.clear();
+        self.writer.clear();
 
-        packet.write(&mut body)?;
+        packet.write(&mut self.packet_buffer)?;
 
-        let len = body.len();
+        let len = self.packet_buffer.len();
         let len = VarInt(len as i32);
 
-        let mut buffer = BytesMut::new();
-        len.write(&mut buffer)?;
-        buffer.extend_from_slice(&body);
+        len.write(&mut self.writer)?;
+        self.writer.extend_from_slice(&self.packet_buffer);
 
-        self.socket.write_all(&buffer).await?;
+        self.socket.write_all(&self.writer).await?;
         self.socket.flush().await?;
 
         Ok(())
