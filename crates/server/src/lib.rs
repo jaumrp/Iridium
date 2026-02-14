@@ -7,6 +7,7 @@ pub use log;
 use serde::{Deserialize, Serialize};
 pub use tokio;
 
+pub mod game;
 use time::macros::format_description;
 
 #[derive(Serialize, Clone)]

@@ -40,6 +40,7 @@ ahash = { version = "0.8.12", features = ["serde"] }
 serde_yaml = "0.9.34"
 parking_lot = "0.12.5"
 byteorder = "1.5.0"
+dashmap = "5.4.0"
 
 [dependencies]
 server = { path = "crates/server" }

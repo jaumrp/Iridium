@@ -1,4 +1,6 @@
-use ahash::AHashMap;
+use std::sync::Arc;
+
+use dashmap::DashMap;
 
 use crate::{chunk::Chunk, generator::WorldGenerator};
 
@@ -13,34 +15,44 @@ pub enum DimensionId {
 }
 
 pub struct World {
-    pub dimensions: AHashMap<DimensionId, Dimension>,
+    pub dimensions: DashMap<DimensionId, Arc<Dimension>>,
 }
 
 pub struct Dimension {
     pub min_y: i32,
     pub height: i32,
-    pub chunks: AHashMap<(i32, i32), Chunk>,
+    pub chunks: DashMap<(i32, i32), Chunk>,
     pub generator: Box<dyn WorldGenerator>,
+}
+
+impl World {
+    pub fn new() -> Self {
+        World {
+            dimensions: DashMap::new(),
+        }
+    }
+
+    pub fn add_dimension(&mut self, id: DimensionId, dimension: Dimension) {
+        self.dimensions.insert(id, Arc::new(dimension));
+    }
+
+    pub fn get_dimension(&self, id: DimensionId) -> Option<Arc<Dimension>> {
+        self.dimensions.get(&id).map(|r| r.value().clone())
+    }
 }
 
 impl Dimension {
     pub fn new(id: DimensionId, generator: Box<dyn WorldGenerator>) -> Self {
         let (min_y, height) = match id {
-            DimensionId::Overworld => (-64, 384),
+            DimensionId::Overworld => (-64, 320),
             DimensionId::Nether => (0, 128),
             DimensionId::TheEnd => (0, 256),
         };
         Dimension {
             min_y,
             height,
-            chunks: AHashMap::new(),
+            chunks: DashMap::new(),
             generator,
         }
-    }
-
-    pub fn get_or_generate_chunk(&mut self, x: i32, z: i32) -> &mut Chunk {
-        self.chunks
-            .entry((x, z))
-            .or_insert_with(|| self.generator.generate_chunk(x, z))
     }
 }

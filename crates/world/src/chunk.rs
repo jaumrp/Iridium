@@ -48,7 +48,7 @@ impl Chunk {
     }
 
     pub fn fill_layer(&mut self, y: i32, block_id: u16) {
-        if block_id == 0 || y < -64 || y > 320 {
+        if y < -64 || y > 320 {
             return;
         }
 
@@ -56,12 +56,26 @@ impl Chunk {
         let local_y = ((y + 64) % 16) as usize;
 
         let section = &mut self.sections[idx];
-        section.blocks_count += 256;
 
-        for x in 0..16 {
-            for z in 0..16 {
-                let index = (local_y * 16 + z) * 16 + x;
-                section.blocks[index] = block_id;
+        let start_index = local_y * 256;
+        let end_idnex = start_index + 256;
+        let slice = &mut section.blocks[start_index..end_idnex];
+
+        let existing_blocks = slice.iter().filter(|&&id| id != 0).count() as u16;
+        section.blocks_count -= existing_blocks;
+        slice.fill(block_id);
+        if block_id != 0 {
+            section.blocks_count += 256;
+        }
+    }
+
+    pub fn fill_section(&mut self, section_index: usize, block_id: u16) {
+        if let Some(section) = self.sections.get_mut(section_index) {
+            section.blocks.fill(block_id);
+            if block_id == 0 {
+                section.blocks_count = 0;
+            } else {
+                section.blocks_count = 4096;
             }
         }
     }

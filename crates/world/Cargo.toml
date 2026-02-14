@@ -7,3 +7,5 @@ edition.workspace = true
 log.workspace = true
 serde.workspace = true
 ahash.workspace = true
+dashmap.workspace = true
+parking_lot.workspace = true

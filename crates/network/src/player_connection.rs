@@ -20,6 +20,8 @@ use crate::states::{
     handshaking::HandshakePacketHandler, login::LoginPacketHandler, status::StatusPacketHandler,
 };
 
+const MAX_PACKET_SIZE: usize = 2 * 1024 * 1024;
+
 pub struct PlayerConnection {
     socket: TcpStream,
     buffer: BytesMut,
@@ -73,10 +75,16 @@ impl PlayerConnection {
 
                                     let packet_len = match VarInt::read(&mut cursor) {
                                         Ok(i) => i.0 as usize,
-                                        Err(_) => {
+                                        Err(PacketError::Incomplete) => {
                                             break;
                                         }
+                                        Err(_) => {
+                                            return;
+                                        }
                                     };
+                                    if packet_len > MAX_PACKET_SIZE {
+                                        return;
+                                    }
                                     let len = cursor.position() as usize;
                                     if self.buffer.len() < len + packet_len {
                                         if self.buffer.capacity() < len + packet_len {
